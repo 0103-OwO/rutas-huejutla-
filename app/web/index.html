@@ -34,60 +34,39 @@ menu("index.html");
 let red;                                                // paradas, tramos y rutas (para nombres y colores)
 const nombre = id => red.paradas.find(p => p.id === id).nombre;
 const colorDe = ruta => red.rutas.find(r => r.id === ruta).color;
-
 async function iniciar() {
   red = await api("/red");                                // GET /api/red
   for (const id of ["origen", "destino"]) {
     const s = document.getElementById(id);
-    for (const p of red.paradas) { 
-      const o = el("option", null, p.nombre); 
-      o.value = p.id; 
-      s.append(o); 
-    }
+    for (const p of red.paradas) { const o = el("option", null, p.nombre); o.value = p.id; s.append(o); }
   }
   document.getElementById("origen").value = "rio";
   document.getElementById("destino").value = "uthh";
   dibujarMapa(document.getElementById("mapa"), red);
 }
-
 // Convierte la lista de tramos en instrucciones: "Sube a R1 en X y baja en Y (n paradas)"
 function pasos(op) {
   const lista = [];
   let inicio = 0;
   for (let i = 1; i <= op.rutas.length; i++) {
     if (i === op.rutas.length || op.rutas[i] !== op.rutas[i - 1]) {
-      lista.push({ 
-        ruta: op.rutas[inicio], 
-        desde: op.paradas[inicio], 
-        hasta: op.paradas[i],
-        paradas: i - inicio 
-      });
+      lista.push({ ruta: op.rutas[inicio], desde: op.paradas[inicio], hasta: op.paradas[i], paradas: i - inicio });
       inicio = i;
     }
   }
   return lista;
 }
-
 function mostrar(r) {
   const cont = document.getElementById("opciones");
   cont.textContent = "";
-  if (!r.opciones.length) { 
-    aviso(cont, "No hay forma de llegar: revisa si hay tramos cerrados.", "error"); 
-    dibujarMapa(document.getElementById("mapa"), red); 
-    return; 
-  }
+  if (!r.opciones.length) { aviso(cont, "No hay forma de llegar: revisa si hay tramos cerrados.", "error"); dibujarMapa(document.getElementById("mapa"), red); return; }
   r.opciones.forEach((op, k) => {
     const t = el("article", "tarjeta opcion" + (k === 0 ? " activa" : ""));
-    t.append(
-      el("h3", null, (k === 0 ? "Recomendada · " : "Opcion " + (k + 1) + " · ") + op.tiempoTotal + " min"),
-      el("p", "nota", op.minutos + " min en combi · " + op.transbordos + " transbordo(s) · $" + op.costo)
-    );
+    t.append(el("h3", null, (k === 0 ? "Recomendada · " : "Opcion " + (k + 1) + " · ") + op.tiempoTotal + " min"),
+      el("p", "nota", op.minutos + " min en combi · " + op.transbordos + " transbordo(s) · $" + op.costo));
     for (const p of pasos(op)) {
       const linea = el("div", "paso");
-      linea.append(
-        etiquetaRuta(p.ruta, colorDe(p.ruta)), 
-        el("span", null, "Sube en " + nombre(p.desde) + " y baja en " + nombre(p.hasta) + " (" + p.paradas + " tramo" + (p.paradas > 1 ? "s" : "") + ")")
-      );
+      linea.append(etiquetaRuta(p.ruta, colorDe(p.ruta)), el("span", null, "Sube en " + nombre(p.desde) + " y baja en " + nombre(p.hasta) + " (" + p.paradas + " tramo" + (p.paradas > 1 ? "s" : "") + ")"));
       t.append(linea);
     }
     t.addEventListener("click", () => {
@@ -99,29 +78,21 @@ function mostrar(r) {
   });
   dibujarMapa(document.getElementById("mapa"), red, { camino: r.opciones[0].paradas, rutas: r.opciones[0].rutas });
 }
-
 document.getElementById("buscar").addEventListener("submit", async evento => {
   evento.preventDefault();
   try {
-    const origen = document.getElementById("origen").value;
-    const destino = document.getElementById("destino").value;
+    const origen = document.getElementById("origen").value, destino = document.getElementById("destino").value;
     const r = await api("/como-llego?origen=" + origen + "&destino=" + destino);   // GET /api/como-llego
     mostrar(r);
     verCypher(document.getElementById("cypher"), r.cypher);
     aviso(document.getElementById("aviso"), "");
-  } catch (e) { 
-    aviso(document.getElementById("aviso"), e.message, "error"); 
-  }
+  } catch (e) { aviso(document.getElementById("aviso"), e.message, "error"); }
 });
-
 // Codigo QR hacia esta misma pagina
 try {
-  const q = qrcode(0, "M"); 
-  q.addData(location.origin + "/index.html"); 
-  q.make();
+  const q = qrcode(0, "M"); q.addData(location.origin + "/index.html"); q.make();
   document.getElementById("qr").innerHTML = q.createSvgTag(5, 2);
 } catch (e) { /* sin internet no se dibuja el QR */ }
-
 iniciar().catch(e => aviso(document.getElementById("aviso"), e.message, "error"));
 </script>
 </body>

@@ -1,6 +1,6 @@
 // Rutas de Huejutla · conexion con Neo4j AuraDB.
 // La direccion, el usuario y la contrasena NO estan en el codigo: se leen de los
-// secretos del codespace (variables de entorno NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD).
+ // secretos del codespace (variables de entorno NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD).
 const neo4j = require("neo4j-driver");               // controlador oficial de Neo4j para Node.js
 const { NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD } = process.env;
 if (!NEO4J_URI || !NEO4J_PASSWORD) {
